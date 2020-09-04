@@ -1,6 +1,6 @@
 Welcome to the VeriBetrKV (also known as VeriSafeKV) artifact for our OSDI'20 submission,
 
- Storage Systems are Distributed Systems (So Verify Them That Way!)
+_Storage Systems are Distributed Systems (So Verify Them That Way!)_
 
 This artifact is distributed as a Docker container based on an Ubuntu image and includes,
 
@@ -17,31 +17,59 @@ All source is distributed under their projects' respective licenses.
 
 # Obtaining the Docker image
 
-You can either download the GitHub release, `osdi2020-artifact`, and load the image with
+You have a choice of obtaining an image for SSD-optimized VeriBetrKV or
+HDD-optimized VeriBetrKV. 
 
-    docker load -i veribetrkv-artifact.tgz
+## Obtaining the HDD-optimized Docker image
+
+You can either download the GitHub release, `veribetrkv-artifact-hdd`, and load the image with
+
+    docker load -i veribetrkv-artifact-hdd.tgz
 
 or build it yourself with,
 
-    cd docker
-    docker build -t veribetrkv-artifact .
+    cd docker-hdd
+    docker build -t veribetrkv-artifact-hdd .
+
+## Obtaining the SSD-optimized Docker image
+
+You can either download the GitHub release, `veribetrkv-artifact-ssd`, and load the image with
+
+    docker load -i veribetrkv-artifact-ssd.tgz
+
+or build it yourself with,
+
+    cd docker-ssd
+    docker build -t veribetrkv-artifact-ssd .
 
 # Evaluating this artifact
 
-To fully evaluate the artifact, our benchmark suite needs to be run twice, once for
+There are two versions of Veribetrkv, one optimised for hdds and one optimized
+for ssds. The only difference is the size of the B-epsilon tree nodes.
+
+In our paper, SSD-reported numbers are done using the SSD-optimized version,
+and HDD-reported numbers are done using the HDD-optimized version. (The exact hardware
+specs we used can be found in Section 7.2 of our paper.)
+
+We show commands for evaluating on hdds in this README. Replace `hdd` with `ssd`
+to use the SSD-optimzed version.
+
+To fully evaluate the artifact on the chosen hardware (HDD or SSD),
+our benchmark suite needs to be run twice, once for
 the 'dynamic-frames' version and once for the 'linear' version. 
 
-Furthermore, some of these benchmarks are very sensitive to memory capacity and
-to the type of underlying hardware. Thus, to obtain results similar to the ones in our
-paper, the right memory configuration must be used.
+Furthermore, some of these benchmarks are very sensitive to the available memory capacity.
+Thus, to obtain to results similar to the ones in our paper,
+the right memory configurations must be used for certain experiments.
 
-However, some of the other operations require higher memory limits.
+On the other hand, some of the other operations will fail if they
+are not given _enough_ memory.
 
 Therefore, the recommended way to evaluate this artifact is
 to run these scripts (from outside the Docker container).
 
-    ./run-experiments-in-docker-dynamic-frames.sh results-df
-    ./run-experiments-in-docker-linear.sh         results-linear
+    ./run-experiments-in-docker-dynamic-frames.sh results-df     hdd
+    ./run-experiments-in-docker-linear.sh         results-linear hdd
 
 The first script will launch Docker containers and,
 
@@ -58,7 +86,11 @@ The first script will launch Docker containers and,
  * When complete, it will summarize all results into a file,
    `results-df/artifact/paper.pdf`.
 
-The second script will do the same, but for the 'linear' version.
+The second script will do the same, but for the 'linear' version. (The only other
+difference is that it will not re-run the BerkeleyDB or RocksDB experiments
+again, as it would be redundant to run them twice. Those two experiments
+are not affected by changed to VeriBetrKV source code.)
+It will likewise summarize all results into a file, `results-linear/artifact/paper.pdf`.
 
 Together, these two output pdfs should reproduce the results from our paper.
 

@@ -1,0 +1,20 @@
+Source: kyoto-tycoon
+Package: kyoto-tycoon
+Maintainer: Carlos Rodrigues <cefrodrigues@gmail.com>
+Homepage: https://github.com/alticelabs/kyoto
+Priority: optional
+Section: misc
+Build-Depends: zlib1g-dev, liblua5.1-0-dev, liblzo2-dev
+Depends: adduser, lsb-base
+Description: Kyoto Tycoon key-value server (and Kyoto Cabinet library)
+ .
+ Kyoto Tycoon is a lightweight server on top of the Kyoto Cabinet
+ key-value database, built for high-performance and concurrency.
+ .
+ Some of its features include:
+ .
+   - master-slave and master-master replication
+   - in-memory and persistent databases
+   - hash and tree-based database formats
+   - server-side scripting in Lua
+   - support for the memcached protocol

@@ -4,13 +4,15 @@
 ##### codebase.  It creates a volume, `veribetrkv-dynamic-frames-build` so that
 ##### build data persists across docker runs.
 
-if [ -z "$1" ]; then
-  echo "Usage: ./run-experiments-in-docker-dynamic-frames.sh OUTDIR"
+if [ "$#" -ne 2 ]; then
+  echo "Usage: ./run-experiments-in-docker-dynamic-frames.sh OUTDIR ssd|hdd"
   echo "    OUTDIR: Directory where build results will go."
   echo "        This directory is mounted into the container so that"
   echo "        build results will persist across runs."
   echo "        This is also where database images will be built"
   echo "        during benchmarks."
+  echo "    ssd: Run in the docker artifact named veribetrkv-artifact-ssd."
+  echo "    hdd: Run in the docker artifact named veribetrkv-artifact-hdd."
   exit 1
 fi
 
@@ -18,6 +20,7 @@ set -e
 
 # demand absolute path
 OUTDIR=`realpath "$1"`
+HARDWARE=$2
 
 set -x
 
@@ -26,7 +29,7 @@ set -x
 docker run --rm \
   -v $OUTDIR:/home/root/veribetrkv-dynamic-frames/build \
   -w=/home/root/veribetrkv-dynamic-frames \
-  veribetrkv-artifact:latest \
+  veribetrkv-artifact-$HARDWARE:latest \
   make elf ycsb
 
 ##### Run verification. Will take several hours:
@@ -35,7 +38,7 @@ docker run --rm \
 docker run --rm \
   -v $OUTDIR:/home/root/veribetrkv-dynamic-frames/build \
   -w=/home/root/veribetrkv-dynamic-frames \
-  veribetrkv-artifact:latest \
+  veribetrkv-artifact-$HARDWARE:latest \
   make status -j4
 
 ##### Run key-value store benchmarks with an appropriate memory limit.
@@ -45,8 +48,8 @@ docker run --rm \
 docker run --rm \
   -v $OUTDIR:/home/root/veribetrkv-dynamic-frames/build \
   -w=/home/root/veribetrkv-dynamic-frames \
-  --memory=2g \
-  veribetrkv-artifact:latest \
+  --memory=2g --memory-swappiness=0 \
+  veribetrkv-artifact-$HARDWARE:latest \
   make build/VeribetrfsYcsb.data
 
 # RocksDB benchmarks
@@ -54,8 +57,8 @@ docker run --rm \
 docker run --rm \
   -v $OUTDIR:/home/root/veribetrkv-dynamic-frames/build \
   -w=/home/root/veribetrkv-dynamic-frames \
-  --memory=2g \
-  veribetrkv-artifact:latest \
+  --memory=2g --memory-swappiness=0 \
+  veribetrkv-artifact-$HARDWARE:latest \
   make build/RocksYcsb.data
 
 # BerkeleyDB benchmarks
@@ -63,8 +66,8 @@ docker run --rm \
 docker run --rm \
   -v $OUTDIR:/home/root/veribetrkv-dynamic-frames/build \
   -w=/home/root/veribetrkv-dynamic-frames \
-  --memory=2g \
-  veribetrkv-artifact:latest \
+  --memory=2g --memory-swappiness=0 \
+  veribetrkv-artifact-$HARDWARE:latest \
   make build/BerkeleyYcsb.data
 
 ##### Run benchmarks of our verified in-memory data structures.
@@ -75,7 +78,7 @@ docker run --rm \
 docker run --rm \
   -v $OUTDIR:/home/root/veribetrkv-dynamic-frames/build \
   -w=/home/root/veribetrkv-dynamic-frames \
-  veribetrkv-artifact:latest \
+  veribetrkv-artifact-$HARDWARE:latest \
   make build/mutable-map-benchmark.csv
 
 # In-memory B-tree
@@ -83,7 +86,7 @@ docker run --rm \
 docker run --rm \
   -v $OUTDIR:/home/root/veribetrkv-dynamic-frames/build \
   -w=/home/root/veribetrkv-dynamic-frames \
-  veribetrkv-artifact:latest \
+  veribetrkv-artifact-$HARDWARE:latest \
   make build/mutable-btree-benchmark.csv
 
 # Run line-counting routines and put it all together into a pdf.
@@ -94,5 +97,5 @@ docker run --rm \
 docker run --rm \
   -v $OUTDIR:/home/root/veribetrkv-dynamic-frames/build \
   -w=/home/root/veribetrkv-dynamic-frames \
-  veribetrkv-artifact:latest \
+  veribetrkv-artifact-$HARDWARE:latest \
   make build/osdi20-artifact/paper.pdf

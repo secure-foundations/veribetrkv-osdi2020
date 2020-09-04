@@ -1,0 +1,23 @@
+language: cpp
+compiler:
+  - gcc
+  - clang
+
+branches:
+  only:
+    - master
+
+sudo: false
+dist: trusty
+
+addons:
+  apt:
+    packages:
+      - liblua5.1-0-dev
+      - zlib1g-dev
+      - liblzo2-dev
+
+script:
+  - make PREFIX=$HOME/kyoto NPROCS=1
+  - make NPROCS=1 install
+  - make -j1 -C kyototycoon check

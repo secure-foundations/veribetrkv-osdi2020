@@ -1,0 +1,244 @@
+\documentclass[10pt,twocolumn]{article}
+
+\usepackage{xspace}      % Intelligently adds space after a word via \xspace
+\usepackage{subcaption}  % Place two related figures side-by-side
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usetikzlibrary{patterns}
+
+\newcommand{\name}{VeriSafeKV\xspace} % blinded for submission
+\newcommand{\namelinear}{VeriSafeKV-Linear\xspace} % blinded for submission
+
+\newcommand{\btree}{B-tree\xspace}
+\newcommand{\btrees}{B-trees\xspace}
+\newcommand{\Btree}{B-Tree\xspace}
+\newcommand{\Btrees}{B-Trees\xspace}
+\newcommand{\beptree}{B\ensuremath{^\epsilon}-tree\xspace}
+\newcommand{\beptrees}{B\ensuremath{^\epsilon}-trees\xspace}
+\newcommand{\Beptree}{B\ensuremath{^\epsilon}-Tree\xspace}
+\newcommand{\Beptrees}{B\ensuremath{^\epsilon}-Trees\xspace}
+\newcommand{\circnum}[1]{\raisebox{.5pt}{\textcircled{\raisebox{-.9pt} {#1}}}}
+\newcommand{\iosystem}{IOSystem\xspace}
+\newcommand{\template}[1]{$\langle$#1$\rangle$}
+
+%%%%%%%%%  Paper Info %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{\vspace{-2mm}
+Storage Systems are Distributed Systems\\
+(So Verify Them That Way!)
+\\\vspace{2mm}{\large\textbf{OSDI 2020 Artifact Reprodcubility Experiment Results}}
+}
+
+\date{}
+
+%%%%%%%%%  Main Body %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+\maketitle
+
+\input{build/linear-line-counts}
+
+\begin{figure}
+\begin{center}
+\input{build/Impl/Bundle.i.lcreport}
+\end{center}
+  \vspace{-3mm}
+\caption{Line counts by major components.}
+\label{line-counts}
+\end{figure}
+
+\begin{figure}
+  \begin{center}
+    \input{build/linear-line-count-table}
+  \end{center}
+  \vspace{-3mm}
+  \caption{Line counts of two subcomponents.
+  }
+  \label{line-counts-micro}
+  \vspace{-2mm}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=1\columnwidth]{build/verification-times.pdf}
+  \vspace{-5mm}
+\caption{Cumulative distribution of verification times of function
+  definitions, implementation methods, and proof lemmas.
+  }
+  \vspace{-4mm}
+\label{verification-times}
+\end{figure}
+
+\begin{figure*}
+\includegraphics[width=1\textwidth,ext=.i.status.pdf,type=pdf,read=*]{build/Impl/Bundle}
+\caption{Verification results.}
+\label{verification-results}
+\end{figure*}
+
+\begin{figure}
+\includegraphics[width=1\columnwidth]{build/automation-figure.pdf}
+  \vspace{-4mm}
+  \caption{Distribution of definition revelations.}
+  \vspace{-3mm}
+\label{automation-histogram}
+\end{figure}
+
+\newcommand{\ycsbHddDataDir}{data/ycsb-hdd/golden}
+\newcommand{\ycsbSsdDataDir}{data/ycsb-ssd/golden}
+\newcommand{\mutablebtreeDataDir}{data/mutablebtree/silver}
+
+\pgfplotsset{
+  GenericBarplot/.style={
+    ybar=1pt,
+    bar width=5.5pt,
+    height = 1.75in,
+    enlarge x limits=0.1,
+    major x tick style = transparent,
+    scaled y ticks=false,
+    ylabel near ticks,
+    point meta=rawy,
+    nodes near coords,
+    every node near coord/.append style={rotate=90, anchor=west, font=\tiny},
+    nodes near coords={\pgfmathprintnumber[fixed, precision=0]{\pgfplotspointmeta}},
+    area legend,
+    legend columns=-1,
+    label style={font=\small, align=center},
+  },
+  MinMidMaxFile/.style n args={3}{
+    /pgfplots/error bars/y dir=both,
+    /pgfplots/error bars/y explicit,
+    table/y error plus expr = (\thisrow{#3} - \thisrow{#2}),
+    table/y error minus expr = (\thisrow{#2} - \thisrow{#1}),
+  }
+}
+
+\pgfplotsset{
+  YcsbThroughput/.style={
+    GenericBarplot,
+    symbolic x coords = {Load, A, B, C, D, F, Cuniform},
+    ylabel={Operations/Second},
+    MinMidMaxFile={MinThroughput}{MedianThroughput}{MaxThroughput},
+  },
+  YcsbLoadThroughput/.style={
+    YcsbThroughput,
+    width = 1.1in,
+    restrict x to domain=0:0,
+    xtick = {Load},
+    xlabel={(from YCSB A)},
+  },
+  YcsbRunThroughput/.style={
+    YcsbThroughput,
+    width = 3.1in,
+    xmin = A,
+    xmax = Cuniform,
+    restrict x to domain=1:10,
+    xtick = {A, B, C, D, F, Cuniform},
+    xticklabels = {A, B, C, D, F, U},
+    xlabel={YCSB Workload},
+  },
+}
+
+\pgfplotsset{
+    LinearStyle/.style={teal, fill=teal!10!white, postaction={pattern=north west lines, pattern color=teal!50!white}},
+    HeapStyle/.style={violet!50!black, fill=violet!50!black!10!white, postaction={pattern=north east lines, pattern color=violet!50!black!50!white}},
+}
+
+\pgfplotsset{
+    BerkeleyStyle/.style={blue, fill=blue!10!white, postaction={pattern=crosshatch dots, pattern color=blue!50!white}},
+    VeriHeapStyle/.style={HeapStyle},
+    VeriLinearStyle/.style={LinearStyle},
+    RocksStyle/.style={red, fill=red!05!white, postaction={pattern=crosshatch, pattern color=red!50!white}},
+}
+
+\begin{figure*}
+\centering
+\ref{ycsb-legend}
+  \begin{tikzpicture}
+    \begin{axis}[
+        YcsbLoadThroughput,
+        ymode = log,
+        %ymax = 100000,
+        %ytick = { 100, 1000, 10000, 100000, 1000000 },
+        legend columns=1,
+        legend to name={ycsb-legend},
+      ]
+      \addplot+ [VeriLinearStyle] table {build/VeribetrfsYcsb.csv};
+      \addlegendentry{\name}
+    \end{axis}
+  \end{tikzpicture}
+  \begin{tikzpicture}
+    \begin{axis}[
+        YcsbRunThroughput,
+        %ymin = 0,
+        %ymax = 800,
+      ]
+      \addplot+ [VeriLinearStyle] table {build/VeribetrfsYcsb.csv};
+    \end{axis}
+  \end{tikzpicture}
+
+\caption{
+Median throughput of YCSB workloads values.  Load is 10M operations
+($\approx$ 5GB of data) and runs are 10000 operations each.
+Higher is better.
+}
+\label{fig:ycsb}
+\end{figure*}
+
+\begin{figure}
+\centering
+%\ref{micro-legend}
+\begin{subfigure}[t]{.25\textwidth}
+  \begin{tikzpicture}
+    \begin{axis}[
+        GenericBarplot,
+        enlarge x limits=0.2,
+        width = 1.8in,
+        symbolic x coords = {insert, readpositive, readnegative, remove},
+        xtick = {insert, readpositive, readnegative, remove},
+        xticklabels = {Insert, Pos. Query, Neg. Query, Delete},
+        x tick label style={rotate=90},
+        ymin = 0,
+        %ymax = 8300000,
+        %ytick = {0, 2000000, 4000000, 6000000, 8000000},
+        %yticklabels={0, 2M, 4M, 6M, 8M},
+        ylabel={Operations/Second},
+        legend to name={micro-legend},
+        MinMidMaxFile={min}{med}{max},
+      ]
+      \addplot+ [HeapStyle] table {build/mutable-map-benchmark.csv};
+    \end{axis}
+  \end{tikzpicture}
+  \subcaption{Hash table}
+  \label{subfig:micro-hashtable}
+\end{subfigure}~%
+\hspace{0.3in}
+\begin{subfigure}[t]{.2\textwidth}
+  \centering
+  \parbox{1.7\textwidth}{
+    \vspace{-2.475in}
+  \begin{tikzpicture}
+    \begin{axis}[
+        GenericBarplot,
+        enlarge x limits=0.5,
+        width = 1.3in,
+        symbolic x coords = {write,read},
+        xtick = {write, read},
+        xticklabels = {Insert, Query},
+        x tick label style={rotate=90},
+        ymin = 0,
+        %ymax = 300000,
+        %ylabel={Operations/Second},
+        MinMidMaxFile={min}{med}{max},
+      ]
+      \addplot+ [HeapStyle] table {build/mutable-btree-benchmark.csv};
+    \end{axis}
+  \end{tikzpicture}}\\
+  \subcaption{Search tree}
+  \label{subfig:micro-btree}
+\end{subfigure}
+\caption{Throughput of subcomponent microbenchmarks.
+  Higher is better. 
+}\label{fig:datastructures-micro}
+\end{figure}
+
+
+\end{document}
